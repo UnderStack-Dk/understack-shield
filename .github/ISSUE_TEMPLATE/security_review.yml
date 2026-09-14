@@ -1,0 +1,14 @@
+name: Security review
+description: Internal engineering review item (not for public disclosure)
+labels: ["type:security"]
+body:
+  - type: textarea
+    id: area
+    attributes:
+      label: Area affected
+    validations:
+      required: true
+  - type: textarea
+    id: concern
+    attributes:
+      label: Concern / question to resolve
