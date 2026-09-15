@@ -1,18 +1,18 @@
 # MVP Work Breakdown — 3 Developers
 
 Source of truth for scope: `UnderStack AI Shield — Complete Production
-Master Prompt` and its extension `Local Ethical Hacker + Continuous
+Spec` and its extension `Local Ethical Hacker + Continuous
 Self-Pentest Engine` (both supplied by the project owner). This
 document only translates that spec into parallel, issue-sized work
 for three developers; it does not redefine architecture or MVP scope
 — that stays the owner's call per `docs/DECISIONS.md`.
 
 Stack: Kotlin, Jetpack Compose, Hilt, Room, multi-module Gradle
-(master prompt §20–21).
+(spec §20–21).
 
 ## Tracks
 
-Three tracks map to the module list in master prompt §21, split so
+Three tracks map to the module list in spec §21, split so
 each dev can work with minimal cross-track blocking. Each track owns
 its modules end to end (data → domain → UI wiring for its own
 screens/rows).
@@ -23,7 +23,7 @@ Owns: `core-model`, `core-database`, `core-crypto`, `core-policy`,
 `engine-correlation`, `engine-response`, `defense-network`,
 `reputation-api`.
 
-Responsible for the pipeline in master prompt §4
+Responsible for the pipeline in spec §4
 (Observe → Normalize → Score → Correlate → Verify → Contain →
 Recover → Log), the risk-level model, Wi-Fi/cellular/VPN/DNS defense
 (§5), the reputation-provider abstraction (§27), and — once the
@@ -59,13 +59,13 @@ surface this track already owns.
 This track is the natural one for the project owner to take, since it
 also owns final integration, CI/CD and release gating (§29–31).
 
-## Phased delivery (maps to master prompt §"Implementation Order" +
+## Phased delivery (maps to spec §"Implementation Order" +
 extension §26)
 
 Work proceeds in the phases below. Within a phase, the three tracks
 work in parallel on their own modules; a phase is "done" only when
 all three tracks finish it (keeps the app buildable and demoable at
-every phase boundary — the master prompt's Definition of Done, §34,
+every phase boundary — the spec's Definition of Done, §34,
 is cumulative, not a final-week scramble).
 
 | Phase | Track A | Track B | Track C |
@@ -100,7 +100,7 @@ either by owner or by phase.
 
 It does not define the MVP's functional scope, acceptance criteria,
 or timeline — `docs/MVP.md` stays the owner's document, filled in
-from the master prompt. It does not assign specific people to tracks
+from the spec. It does not assign specific people to tracks
 — that's a one-line edit once the owner decides who takes A/B/C. It
 does not touch `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, or
 `docs/DECISIONS.md`, which remain the owner's to write.

@@ -1,6 +1,6 @@
 name: CodeQL
 
-# Basic automated security scan (master prompt section 29: "basic security scan").
+# Basic automated security scan (spec §29: "basic security scan").
 # Skips cleanly (no false red X) until real Kotlin/Java source exists to
 # analyze — same pattern as ci.yml's "detect" job.
 
