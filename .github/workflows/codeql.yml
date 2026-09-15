@@ -1,0 +1,29 @@
+name: CodeQL
+
+# Basic automated security scan (master prompt section 29: "basic security scan").
+# Language auto-analysis works even before Gradle project files exist for any
+# Kotlin/Java source that gets committed; it simply finds nothing to scan
+# until then.
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  schedule:
+    - cron: "0 6 * * 1" # weekly, Monday 06:00 UTC
+
+jobs:
+  analyze:
+    name: Analyze (Kotlin/Java)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: java-kotlin
+      - uses: github/codeql-action/autobuild@v3
+      - uses: github/codeql-action/analyze@v3
