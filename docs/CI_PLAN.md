@@ -1,18 +1,19 @@
-# CI Plan (not active yet)
+# CI Plan
 
-No CI/CD exists in this repository yet, so no status checks are
-required on `main` or `develop`.
+Two workflows exist under `.github/workflows/`:
 
-Once implementation starts, the intended required checks on `main`
-are expected to be:
+- `ci.yml` — build (`assembleDebug`), lint/static analysis (`detekt`,
+  Android Lint), unit tests, and a dependency vulnerability scan.
+  Each job checks for a committed `gradlew` first and exits cleanly
+  if the Android project doesn't exist yet, so doc-only PRs stay
+  green. The moment the first Gradle module lands, these jobs
+  activate with no further changes needed here.
+- `codeql.yml` — CodeQL static analysis for Java/Kotlin (the "basic
+  security scan"), on PRs, pushes, and a weekly schedule.
 
-- build
-- lint
-- typecheck / static analysis
-- unit tests
-- basic security scan
-
-When a GitHub Actions workflow providing these exists and is stable,
-enable them as required status checks on the `main` ruleset (see
-`gh api repos/OWNER/REPO/rulesets` to add a `required_status_checks`
-rule referencing the workflow job names).
+Once the Android project exists and these jobs have run green at
+least once, enable them as required status checks on the `main`
+ruleset (Settings → Rules → Rulesets → main → Require status checks
+to pass, or `gh api repos/OWNER/REPO/rulesets` for a
+`required_status_checks` rule referencing the job names above).
+`develop` can pick up the same checks as non-blocking signal first.

@@ -1,0 +1,117 @@
+name: CI
+
+# Runs on every PR into develop/main, and on pushes to develop.
+# Per docs/CI_PLAN.md: build, lint, static analysis, unit tests, dependency scan.
+#
+# NOTE: this repository has no Gradle project yet (planning stage). Each job
+# checks for the Gradle wrapper first and exits cleanly (success, not a
+# false failure) when it isn't there yet, so doc-only PRs stay green. Once
+# the first Android module (app/) with a committed `gradlew` lands, these
+# jobs activate automatically — no changes needed here.
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect:
+    name: Detect Gradle project
+    runs-on: ubuntu-latest
+    outputs:
+      has_gradle: ${{ steps.check.outputs.has_gradle }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if [ -f "./gradlew" ]; then
+            echo "has_gradle=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_gradle=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No gradlew found yet — skipping build/lint/test jobs until the Android project is scaffolded."
+          fi
+
+  build:
+    name: Build (assembleDebug)
+    needs: detect
+    if: needs.detect.outputs.has_gradle == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - run: chmod +x ./gradlew
+      - run: ./gradlew assembleDebug --stacktrace
+
+  lint:
+    name: Lint + static analysis (detekt, Android Lint)
+    needs: detect
+    if: needs.detect.outputs.has_gradle == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - run: chmod +x ./gradlew
+      - run: ./gradlew detekt lintDebug --stacktrace
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lint-reports
+          path: |
+            **/build/reports/detekt/**
+            **/build/reports/lint-results-*.html
+
+  unit-tests:
+    name: Unit tests
+    needs: detect
+    if: needs.detect.outputs.has_gradle == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - run: chmod +x ./gradlew
+      - run: ./gradlew testDebugUnitTest --stacktrace
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-reports
+          path: "**/build/reports/tests/**"
+
+  dependency-scan:
+    name: Dependency vulnerability scan
+    needs: detect
+    if: needs.detect.outputs.has_gradle == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - run: chmod +x ./gradlew
+      # Requires the OWASP dependency-check Gradle plugin to be applied in
+      # the root build.gradle.kts (see docs/WORK_BREAKDOWN.md, Hardening phase).
+      # Until then this step is a documented no-op instead of a false red X.
+      - run: |
+          if ./gradlew tasks --all | grep -q dependencyCheckAnalyze; then
+            ./gradlew dependencyCheckAnalyze --stacktrace
+          else
+            echo "::notice::dependencyCheckAnalyze task not present yet — add the OWASP dependency-check plugin (see docs/CI_PLAN.md)."
+          fi

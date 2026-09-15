@@ -1,0 +1,46 @@
+name: CodeQL
+
+# Basic automated security scan (master prompt section 29: "basic security scan").
+# Skips cleanly (no false red X) until real Kotlin/Java source exists to
+# analyze — same pattern as ci.yml's "detect" job.
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  schedule:
+    - cron: "0 6 * * 1" # weekly, Monday 06:00 UTC
+
+jobs:
+  detect:
+    name: Detect Gradle project
+    runs-on: ubuntu-latest
+    outputs:
+      has_gradle: ${{ steps.check.outputs.has_gradle }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if [ -f "./gradlew" ]; then
+            echo "has_gradle=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_gradle=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No gradlew found yet — skipping CodeQL until the Android project is scaffolded."
+          fi
+
+  analyze:
+    name: Analyze (Kotlin/Java)
+    needs: detect
+    if: needs.detect.outputs.has_gradle == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: java-kotlin
+      - uses: github/codeql-action/autobuild@v3
+      - uses: github/codeql-action/analyze@v3
